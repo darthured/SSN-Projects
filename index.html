@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QC Inspection Platform Research — SSN Projects</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ssn-blue: #1a7bc4;
+    --ssn-navy: #1a3a5c;
+    --ssn-light: #c8dff0;
+    --ssn-pale: #eef5fb;
+    --ink: #111820;
+    --paper: #f4f7fa;
+    --white: #ffffff;
+    --muted: #6b7d8f;
+    --rule: #d0dce8;
+    --green: #1e7a4a;
+    --amber: #c47a1b;
+    --red: #c03030;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: var(--paper); color: var(--ink); font-size: 15px; line-height: 1.6; }
+
+  header { background: var(--ssn-navy); color: var(--white); border-bottom: 4px solid var(--ssn-blue); position: relative; overflow: hidden; }
+  header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 320px; height: 320px; background: var(--ssn-blue); opacity: 0.08; border-radius: 50%; }
+  .header-inner { padding: 48px 64px 40px; position: relative; z-index: 1; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
+  .ssn-logo { display: flex; align-items: center; gap: 14px; }
+  .ssn-wordmark .ssn-name { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; color: var(--ssn-blue); letter-spacing: 0.06em; display: block; }
+  .ssn-wordmark .ssn-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600; color: var(--ssn-light); letter-spacing: 0.22em; text-transform: uppercase; }
+  .doc-label { text-align: right; }
+  .doc-label .prepared { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ssn-light); opacity: 0.6; margin-bottom: 4px; }
+  .doc-label .doc-type { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ssn-light); }
+  header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(26px, 4vw, 42px); font-weight: 600; line-height: 1.1; color: var(--white); letter-spacing: 0.02em; margin-bottom: 10px; }
+  header h1 span { color: var(--ssn-blue); }
+  header .subtitle { font-size: 14px; color: var(--ssn-light); opacity: 0.85; font-weight: 300; max-width: 560px; }
+  .header-meta { display: flex; margin-top: 28px; border-top: 1px solid rgba(200,223,240,0.2); padding-top: 18px; flex-wrap: wrap; gap: 0; }
+  .meta-item { padding: 0 24px 0 0; margin-right: 24px; border-right: 1px solid rgba(200,223,240,0.2); }
+  .meta-item:last-child { border-right: none; }
+  .meta-item .mi-label { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ssn-light); opacity: 0.55; margin-bottom: 3px; }
+  .meta-item .mi-val { font-size: 12px; color: var(--ssn-light); }
+
+  nav { background: var(--ssn-navy); border-bottom: 1px solid rgba(26,123,196,0.3); padding: 0 64px; display: flex; overflow-x: auto; }
+  nav button { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; background: transparent; color: var(--ssn-light); opacity: 0.6; border: none; border-bottom: 3px solid transparent; padding: 14px 20px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  nav button:hover { opacity: 1; color: var(--white); }
+  nav button.active { opacity: 1; color: var(--white); border-bottom-color: var(--ssn-blue); }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 48px 48px 80px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-header { display: grid; grid-template-columns: 1fr 300px; gap: 40px; margin-bottom: 40px; padding-bottom: 28px; border-bottom: 2px solid var(--ssn-light); }
+  .section-header h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 600; line-height: 1.2; color: var(--ssn-navy); letter-spacing: 0.02em; margin-bottom: 10px; }
+  .section-header p { color: var(--muted); font-size: 14px; max-width: 520px; }
+  .verdict-box { background: var(--ssn-navy); padding: 24px; border-radius: 6px; border-left: 4px solid var(--ssn-blue); }
+  .verdict-box .vb-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ssn-blue); margin-bottom: 8px; }
+  .verdict-box p { font-size: 13px; color: #c0d4e8; line-height: 1.55; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 40px; }
+  .card { background: var(--white); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; transition: box-shadow 0.2s, transform 0.2s; }
+  .card:hover { box-shadow: 0 8px 28px rgba(26,60,92,0.1); transform: translateY(-2px); }
+  .card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--rule); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--ssn-navy); letter-spacing: 0.02em; margin-bottom: 2px; }
+  .card-tagline { font-size: 12px; color: var(--muted); }
+  .badge { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; }
+  .badge-tier-1 { background: #e0f0e8; color: var(--green); border: 1px solid #b0d8c0; }
+  .badge-tier-2 { background: #fef3e2; color: var(--amber); border: 1px solid #f4d49a; }
+  .badge-tier-3 { background: var(--ssn-pale); color: var(--muted); border: 1px solid var(--rule); }
+  .badge-custom { background: #deeaf8; color: var(--ssn-navy); border: 1px solid var(--ssn-light); }
+  .card-body { padding: 18px 22px; }
+  .score-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 18px; }
+  .score-item { text-align: center; }
+  .score-circle { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; margin: 0 auto 4px; }
+  .score-high { background: #deeaf8; color: var(--ssn-blue); border: 2px solid var(--ssn-light); }
+  .score-mid { background: #fef3e2; color: var(--amber); border: 2px solid #f4d49a; }
+  .score-low { background: #fceaea; color: var(--red); border: 2px solid #f0c0c0; }
+  .score-label { font-size: 8.5px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.2; }
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .pros-cons h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; color: var(--muted); }
+  .pros-cons ul { list-style: none; }
+  .pros-cons li { font-size: 12.5px; padding: 2px 0 2px 14px; position: relative; line-height: 1.4; }
+  .pros li::before { content: '+'; position: absolute; left: 0; color: var(--ssn-blue); font-weight: 700; }
+  .cons li::before { content: '−'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+  .card-footer { padding: 11px 22px; background: var(--ssn-pale); border-top: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; }
+  .price-tag { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ssn-navy); font-weight: 500; }
+  .price-note { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .fit-tag { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ssn-blue); font-weight: 600; }
+
+  .matrix-wrap { overflow-x: auto; margin-bottom: 40px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
+  thead tr { background: var(--ssn-navy); color: var(--white); }
+  thead th { padding: 13px 16px; text-align: left; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
+  thead th:first-child { width: 210px; }
+  tbody tr { border-bottom: 1px solid var(--rule); }
+  tbody tr:hover { background: var(--ssn-pale); }
+  tbody td { padding: 11px 16px; vertical-align: middle; }
+  tbody td:first-child { font-weight: 500; font-size: 13px; color: var(--ssn-navy); }
+  .dot-yes { color: var(--ssn-blue); font-size: 15px; }
+  .dot-partial { color: var(--amber); font-size: 12px; font-family: 'DM Mono', monospace; }
+  .dot-no { color: var(--red); font-size: 15px; }
+  .dot-strong { color: var(--ssn-blue); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+  .row-header td { background: var(--ssn-pale); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ssn-blue); font-weight: 600; padding: 8px 16px; border-top: 2px solid var(--ssn-light); }
+
+  .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+  .rec-card { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .rec-card-header { padding: 16px 22px; background: var(--ssn-navy); color: var(--white); border-left: 4px solid var(--ssn-blue); }
+  .rec-scenario { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ssn-blue); margin-bottom: 5px; }
+  .rec-card-header h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 600; letter-spacing: 0.02em; }
+  .rec-card-body { padding: 18px 22px; background: var(--white); }
+  .rec-card-body p { font-size: 13.5px; line-height: 1.6; margin-bottom: 12px; }
+  .rec-card-body p:last-child { margin-bottom: 0; }
+  .caveat { font-size: 12px; color: var(--muted); border-left: 3px solid var(--ssn-light); padding-left: 12px; font-style: italic; }
+
+  .gap-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 40px; }
+  .gap-item { display: grid; grid-template-columns: 36px 1fr auto; gap: 16px; align-items: start; padding: 18px 22px; background: var(--white); border: 1px solid var(--rule); border-radius: 8px; border-left: 4px solid var(--ssn-blue); }
+  .gap-num { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 700; color: var(--ssn-blue); line-height: 1; padding-top: 2px; }
+  .gap-content h4 { font-size: 14px; font-weight: 600; color: var(--ssn-navy); margin-bottom: 5px; }
+  .gap-content p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .gap-severity { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; white-space: nowrap; }
+  .sev-critical { background: #fceaea; color: var(--red); }
+  .sev-significant { background: #fef3e2; color: var(--amber); }
+  .sev-manageable { background: #deeaf8; color: var(--ssn-blue); }
+
+  .custom-stack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 28px; }
+  .stack-layer { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .stack-layer-header { background: var(--ssn-blue); color: var(--white); padding: 11px 16px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; }
+  .stack-layer-body { padding: 16px; background: var(--white); }
+  .stack-layer-body p { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+  .stack-layer-body strong { color: var(--ssn-navy); display: block; font-size: 13.5px; margin-bottom: 4px; font-weight: 600; }
+
+  .callout { background: var(--ssn-pale); border-left: 4px solid var(--ssn-blue); padding: 18px 22px; border-radius: 0 8px 8px 0; margin-bottom: 28px; }
+  .callout-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ssn-blue); margin-bottom: 8px; }
+  .callout p { font-size: 13.5px; color: var(--ink); line-height: 1.6; }
+  .callout-warn { background: #fef8ec; border-left-color: var(--amber); }
+  .callout-warn .callout-label { color: var(--amber); }
+
+  footer { background: var(--ssn-navy); border-top: 3px solid var(--ssn-blue); padding: 22px 64px; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ssn-light); opacity: 0.55; letter-spacing: 0.05em; }
+  footer .footer-brand { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--ssn-blue); letter-spacing: 0.1em; opacity: 1; }
+
+  @media (max-width: 768px) {
+    .header-inner { padding: 28px 20px; }
+    .header-top { flex-direction: column; gap: 16px; }
+    nav { padding: 0 20px; }
+    main { padding: 28px 20px 64px; }
+    .section-header { grid-template-columns: 1fr; }
+    .rec-grid { grid-template-columns: 1fr; }
+    .custom-stack { grid-template-columns: 1fr; }
+    footer { padding: 20px; flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="ssn-logo">
+        <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="24,2 44,13 44,35 24,46 4,35 4,13" fill="#1a3a5c" stroke="#1a7bc4" stroke-width="1.5"/>
+          <polygon points="24,8 38,16 38,32 24,40 10,32 10,16" fill="none" stroke="#1a7bc4" stroke-width="1" opacity="0.5"/>
+          <line x1="24" y1="2" x2="24" y2="46" stroke="#1a7bc4" stroke-width="0.8" opacity="0.35"/>
+          <line x1="4" y1="13" x2="44" y2="35" stroke="#1a7bc4" stroke-width="0.8" opacity="0.35"/>
+          <line x1="44" y1="13" x2="4" y2="35" stroke="#1a7bc4" stroke-width="0.8" opacity="0.35"/>
+        </svg>
+        <div class="ssn-wordmark">
+          <span class="ssn-name">SSN</span>
+          <span class="ssn-sub">Projects</span>
+        </div>
+      </div>
+      <div class="doc-label">
+        <div class="prepared">Prepared for</div>
+        <div class="doc-type">SSN Projects · Confidential</div>
+        <div class="doc-type" style="margin-top:3px; opacity:0.45;">May 2026</div>
+      </div>
+    </div>
+    <h1>QC Inspection Platform<br><span>Research &amp; Evaluation</span></h1>
+    <p class="subtitle">A structured analysis of available platforms, capability gaps, and a recommended path forward for SSN Projects' field quality control workflow.</p>
+    <div class="header-meta">
+      <div class="meta-item"><div class="mi-label">Scope</div><div class="mi-val">6 platforms evaluated</div></div>
+      <div class="meta-item"><div class="mi-label">Use Case</div><div class="mi-val">Asia factory → Australia client</div></div>
+      <div class="meta-item"><div class="mi-label">Product Coverage</div><div class="mi-val">100+ building product types</div></div>
+      <div class="meta-item"><div class="mi-label">Regions</div><div class="mi-val">CN · KR · TH · VN</div></div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showSection('overview',this)">Overview</button>
+  <button onclick="showSection('platforms',this)">Platform Profiles</button>
+  <button onclick="showSection('matrix',this)">Feature Matrix</button>
+  <button onclick="showSection('gaps',this)">Gap Analysis</button>
+  <button onclick="showSection('custom',this)">Custom Build Path</button>
+  <button onclick="showSection('verdict',this)">Recommendation</button>
+</nav>
+
+<main>
+
+  <div id="overview" class="section active">
+    <div class="section-header">
+      <div>
+        <h2>What we're evaluating — and why most apps only get you halfway</h2>
+        <p>The market for inspection apps is mature but fragmented. Most tools solve checklist and data capture well. Very few solve the <em>professional output</em> problem — especially when 30–150 photos need to be embedded in a client-ready branded PDF without manual assembly. Almost none address AI-driven checklist intelligence across 100+ product types.</p>
+      </div>
+      <div class="verdict-box">
+        <div class="vb-label">Bottom line upfront</div>
+        <p>No single off-the-shelf app fully meets the brief. The best path is likely a <strong style="color:white;">hybrid</strong>: a purpose-built inspection app for field capture + an AI layer for checklist generation + a client portal for delivery. Or a full custom build if budget allows.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <div class="callout-label">Key requirements — ranked by difficulty to solve off-the-shelf</div>
+      <p><strong>Hardest:</strong> AI-generated, product-aware checklists across 100+ building product types · Auto-generated narrative reports (not cookie-cutter PDFs) · Client portal with inspection history &amp; trend analytics<br><br>
+      <strong>Medium:</strong> 150-photo embedded PDF reports with clean layout · Multi-user field + review workflow · Performance trending across factories<br><br>
+      <strong>Solved by most apps:</strong> Mobile field capture · Offline operation · Branded PDF generation · Google Calendar integration · Multi-region support</p>
+    </div>
+    <div class="callout callout-warn">
+      <div class="callout-label">Critical flag — offline in Asia</div>
+      <p>Factory floors in China, Korea, Thailand, and Vietnam often have restricted or metered WiFi. All shortlisted apps support offline mode, but <strong>photo-heavy inspections (100+ images) require stable sync on reconnect</strong>. Some apps have lost data on large syncs. This must be tested in target environments before committing to any platform.</p>
+    </div>
+  </div>
+
+  <div id="platforms" class="section">
+    <div class="section-header">
+      <div>
+        <h2>Platform profiles</h2>
+        <p>Six platforms evaluated across five dimensions relevant to SSN's workflow. Scores reflect fit for your specific requirements — not general market ratings.</p>
+      </div>
+      <div class="verdict-box">
+        <div class="vb-label">Scoring key (1–5)</div>
+        <p style="font-size:12px;">Scores reflect fit for: Asia-factory QC, client-facing branded output, 100+ product types, photo-heavy reports. A "3" here may still be market-leading for other use cases.</p>
+      </div>
+    </div>
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-name">SafetyCulture</div><div class="card-tagline">formerly iAuditor — the market leader</div></div><span class="badge badge-tier-1">Tier 1</span></div>
+        <div class="card-body">
+          <div class="score-row">
+            <div class="score-item"><div class="score-circle score-mid">3</div><div class="score-label">Checklist AI</div></div>
+            <div class="score-item"><div class="score-circle score-mid">3</div><div class="score-label">Report quality</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Photo embed</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Multi-user</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Analytics</div></div>
+          </div>
+          <div class="pros-cons">
+            <div class="pros"><h4>Strengths</h4><ul><li>AI template generation from text prompt</li><li>12,000+ template library</li><li>Proven offline at scale</li><li>Strong iOS + Android parity</li><li>Instant PDF on submit</li><li>Largest ecosystem &amp; integrations</li></ul></div>
+            <div class="cons"><h4>Weaknesses</h4><ul><li>Report customisation limited — consistent user complaint</li><li>Per-user pricing escalates fast</li><li>3-device cap per user</li><li>No client portal</li><li>AI is template-start only, not full generation</li></ul></div>
+          </div>
+        </div>
+        <div class="card-footer"><div><div class="price-tag">~$24/user/month</div><div class="price-note">Free tier ≤10 users. Premium billed annually.</div></div><div class="fit-tag">Strongest Base</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-name">Lumiform</div><div class="card-tagline">AI-forward, purpose-built inspections</div></div><span class="badge badge-tier-1">Tier 1</span></div>
+        <div class="card-body">
+          <div class="score-row">
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Checklist AI</div></div>
+            <div class="score-item"><div class="score-circle score-mid">3</div><div class="score-label">Report quality</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Photo embed</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Multi-user</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Analytics</div></div>
+          </div>
+          <div class="pros-cons">
+            <div class="pros"><h4>Strengths</h4><ul><li>Strongest AI of any off-the-shelf app</li><li>12,000+ templates; no-code builder</li><li>Corrective actions auto-assigned</li><li>Real-time multi-site dashboard</li><li>Zapier + Power Automate integration</li></ul></div>
+            <div class="cons"><h4>Weaknesses</h4><ul><li>Reports still template-style; no narrative generation</li><li>Android tablet sync issues reported</li><li>Min. 5 users for paid tier</li><li>No client portal</li></ul></div>
+          </div>
+        </div>
+        <div class="card-footer"><div><div class="price-tag">~€100/month (5 seats)</div><div class="price-note">Free plan available. ~€20/user/month above 5.</div></div><div class="fit-tag">Best AI</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-name">GoAudits</div><div class="card-tagline">Focused, fast, reliable auditing</div></div><span class="badge badge-tier-2">Tier 2</span></div>
+        <div class="card-body">
+          <div class="score-row">
+            <div class="score-item"><div class="score-circle score-low">2</div><div class="score-label">Checklist AI</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Report quality</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Photo embed</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Multi-user</div></div>
+            <div class="score-item"><div class="score-circle score-mid">3</div><div class="score-label">Analytics</div></div>
+          </div>
+          <div class="pros-cons">
+            <div class="pros"><h4>Strengths</h4><ul><li>Best-rated report appearance</li><li>Will build your checklists for you (free)</li><li>Most robust offline mode</li><li>Very strong customer support</li><li>Action assignees don't need paid seats</li></ul></div>
+            <div class="cons"><h4>Weaknesses</h4><ul><li>No meaningful AI for checklist generation</li><li>Analytics more limited than SafetyCulture</li><li>Rearranging checklist items can be fiddly</li><li>No client portal</li></ul></div>
+          </div>
+        </div>
+        <div class="card-footer"><div><div class="price-tag">$10–$30/user/month</div><div class="price-note">14-day free trial. Custom enterprise plans.</div></div><div class="fit-tag">Best Value</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-name">Fluix</div><div class="card-tagline">Document-first workflow automation</div></div><span class="badge badge-tier-2">Tier 2</span></div>
+        <div class="card-body">
+          <div class="score-row">
+            <div class="score-item"><div class="score-circle score-low">2</div><div class="score-label">Checklist AI</div></div>
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Report quality</div></div>
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Photo embed</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Multi-user</div></div>
+            <div class="score-item"><div class="score-circle score-low">2</div><div class="score-label">Analytics</div></div>
+          </div>
+          <div class="pros-cons">
+            <div class="pros"><h4>Strengths</h4><ul><li>Best PDF output quality of any app</li><li>Photos + annotations + signatures in PDF</li><li>Approval workflow (inspector → reviewer)</li><li>iOS-first, very polished UX</li><li>Upload existing PDF forms</li></ul></div>
+            <div class="cons"><h4>Weaknesses</h4><ul><li>iOS only for mobile (no Android)</li><li>No scoring or meaningful analytics</li><li>No AI checklist generation</li><li>No client portal</li></ul></div>
+          </div>
+        </div>
+        <div class="card-footer"><div><div class="price-tag">~$20/user/month</div><div class="price-note">iOS preferred. Android has limitations.</div></div><div class="fit-tag">Best PDF Output</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-name">PhotoReport</div><div class="card-tagline">Site inspection via photo-first workflow</div></div><span class="badge badge-tier-3">Specialist</span></div>
+        <div class="card-body">
+          <div class="score-row">
+            <div class="score-item"><div class="score-circle score-low">1</div><div class="score-label">Checklist AI</div></div>
+            <div class="score-item"><div class="score-circle score-high">4</div><div class="score-label">Report quality</div></div>
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Photo embed</div></div>
+            <div class="score-item"><div class="score-circle score-low">2</div><div class="score-label">Multi-user</div></div>
+            <div class="score-item"><div class="score-circle score-low">1</div><div class="score-label">Analytics</div></div>
+          </div>
+          <div class="pros-cons">
+            <div class="pros"><h4>Strengths</h4><ul><li>Generates PDF and interactive HTML reports</li><li>Designed around photos — excellent layout</li><li>Lightweight and fast</li></ul></div>
+            <div class="cons"><h4>Weaknesses</h4><ul><li>No real checklist engine</li><li>No analytics whatsoever</li><li>Not built for multi-user teams</li><li>Not a QC platform — a photo report tool</li></ul></div>
+          </div>
+        </div>
+        <div class="card-footer"><div><div class="price-tag">Low cost / freemium</div><div class="price-note">Niche tool; limited information available.</div></div><div class="fit-tag">Photo Output Only</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-name">Custom Build</div><div class="card-tagline">Airtable / Supabase + AI + Portal</div></div><span class="badge badge-custom">Option C</span></div>
+        <div class="card-body">
+          <div class="score-row">
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Checklist AI</div></div>
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Report quality</div></div>
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Photo embed</div></div>
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Multi-user</div></div>
+            <div class="score-item"><div class="score-circle score-high">5</div><div class="score-label">Analytics</div></div>
+          </div>
+          <div class="pros-cons">
+            <div class="pros"><h4>Strengths</h4><ul><li>Fully bespoke to SSN's workflow</li><li>AI for checklist generation per product</li><li>Client portal with branded HTML reports</li><li>Full analytics — factory performance over time</li><li>Your IP, your data, your brand</li></ul></div>
+            <div class="cons"><h4>Weaknesses</h4><ul><li>Requires developer time (weeks, not days)</li><li>Ongoing maintenance cost</li><li>Higher upfront investment</li><li>Mobile is a PWA, not a native app</li></ul></div>
+          </div>
+        </div>
+        <div class="card-footer"><div><div class="price-tag">$3k–$15k build cost</div><div class="price-note">Then ~$200–500/month running costs.</div></div><div class="fit-tag">Full Control</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="matrix" class="section">
+    <div class="section-header">
+      <div>
+        <h2>Feature matrix</h2>
+        <p>Direct comparison across SSN's stated requirements. Based on verified user reviews and documented platform capabilities, 2025–2026.</p>
+      </div>
+      <div class="verdict-box">
+        <div class="vb-label">Legend</div>
+        <p style="font-size:12px;">✓ = Fully supported &nbsp;|&nbsp; ~ = Partial / limited &nbsp;|&nbsp; ✗ = Not supported &nbsp;|&nbsp; ★ = Best in class</p>
+      </div>
+    </div>
+    <div class="matrix-wrap">
+      <table>
+        <thead><tr><th>Requirement</th><th>SafetyCulture</th><th>Lumiform</th><th>GoAudits</th><th>Fluix</th><th>Custom</th></tr></thead>
+        <tbody>
+          <tr class="row-header"><td colspan="6">Checklist &amp; Capture</td></tr>
+          <tr><td>Mobile-first iOS + Android</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-partial">iOS only</span></td><td><span class="dot-yes">✓ PWA</span></td></tr>
+          <tr><td>Offline operation (factory floor)</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-strong">★ Best</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-partial">~</span></td></tr>
+          <tr><td>AI checklist generation by product type</td><td><span class="dot-partial">~ start only</span></td><td><span class="dot-strong">★ Best</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-strong">★ Full</span></td></tr>
+          <tr><td>Flexible templates per product (100+ types)</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-strong">★ Custom</span></td></tr>
+          <tr><td>Conditional logic (skip irrelevant checks)</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td></tr>
+          <tr><td>Measurement / numeric fields</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td></tr>
+          <tr class="row-header"><td colspan="6">Photos &amp; Report Generation</td></tr>
+          <tr><td>Photos embedded in PDF (not linked)</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-strong">★ Best</span></td><td><span class="dot-strong">★ Full</span></td></tr>
+          <tr><td>150-photo report performance</td><td><span class="dot-partial">~ untested</span></td><td><span class="dot-partial">~ bugs reported</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-strong">★ HTML</span></td></tr>
+          <tr><td>Branded PDF (logo, colours)</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-strong">★ Full</span></td></tr>
+          <tr><td>AI narrative report generation</td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-strong">★ Full</span></td></tr>
+          <tr><td>HTML report option</td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-strong">★ Native</span></td></tr>
+          <tr class="row-header"><td colspan="6">Workflow &amp; Collaboration</td></tr>
+          <tr><td>Multi-user (inspector → review → approve)</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-strong">★ Best</span></td><td><span class="dot-yes">✓</span></td></tr>
+          <tr><td>Google Calendar integration</td><td><span class="dot-partial">~ via Zapier</span></td><td><span class="dot-partial">~ via Zapier</span></td><td><span class="dot-partial">~ via Zapier</span></td><td><span class="dot-partial">~ limited</span></td><td><span class="dot-strong">★ Native</span></td></tr>
+          <tr><td>Client portal (login to view reports)</td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-strong">★ Native</span></td></tr>
+          <tr class="row-header"><td colspan="6">Analytics &amp; Intelligence</td></tr>
+          <tr><td>Factory performance trending over time</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-partial">~ basic</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-strong">★ Custom</span></td></tr>
+          <tr><td>Auto-surface weaknesses / patterns</td><td><span class="dot-partial">~ manual review</span></td><td><span class="dot-partial">~ some AI</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-strong">★ Full</span></td></tr>
+          <tr><td>Non-conformance trend by factory</td><td><span class="dot-yes">✓</span></td><td><span class="dot-yes">✓</span></td><td><span class="dot-partial">~ basic</span></td><td><span class="dot-no">✗</span></td><td><span class="dot-strong">★ Custom</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="gaps" class="section">
+    <div class="section-header">
+      <div>
+        <h2>Gaps across all off-the-shelf platforms</h2>
+        <p>Requirements that no currently available inspection app fully solves. Essential context before committing to any platform.</p>
+      </div>
+      <div class="verdict-box">
+        <div class="vb-label">Why this matters</div>
+        <p>These gaps were identified by mapping SSN's requirements directly against verified platform capabilities — not marketing material. They determine what needs to be built, outsourced, or accepted as a limitation.</p>
+      </div>
+    </div>
+    <div class="gap-list">
+      <div class="gap-item">
+        <div class="gap-num">1</div>
+        <div class="gap-content"><h4>AI-generated, product-aware checklists at the point of inspection</h4><p>SafetyCulture and Lumiform offer AI to <em>start</em> a template — not to generate one dynamically at inspection time based on the specific product being inspected. For SSN's use case — HDPE pipe one day, a facade panel the next, aluminium joinery the day after — the AI needs to surface only the relevant checks for each product type. No off-the-shelf app does this today.</p></div>
+        <span class="gap-severity sev-critical">Critical</span>
+      </div>
+      <div class="gap-item">
+        <div class="gap-num">2</div>
+        <div class="gap-content"><h4>Automated narrative report generation (not template-fill PDFs)</h4><p>Every inspection app produces a structured, template-filled PDF. None produce a written narrative — the kind that reads like a professional report authored by a consultant. This is only achievable by adding an AI layer (Claude, GPT-4o) on top of the inspection data after capture, either via a custom build or a post-processing automation (Zapier → AI → PDF generation).</p></div>
+        <span class="gap-severity sev-critical">Critical</span>
+      </div>
+      <div class="gap-item">
+        <div class="gap-num">3</div>
+        <div class="gap-content"><h4>Client-facing portal with inspection history and trend visibility</h4><p>Zero off-the-shelf inspection apps offer a client portal. Clients receive a PDF by email — that's it. A portal where clients log in, browse inspection history, see trend data across factory visits, and access organised photo evidence would be a genuine differentiator. It would need to be built using Softr, Stacker, or a custom web app on top of the inspection database.</p></div>
+        <span class="gap-severity sev-significant">Significant</span>
+      </div>
+      <div class="gap-item">
+        <div class="gap-num">4</div>
+        <div class="gap-content"><h4>150-photo embedded reports at scale without performance issues</h4><p>PDFs with 100–150 embedded high-resolution photos become extremely large and unwieldy. Some platforms report data loss on large syncs in low-bandwidth environments. HTML reports are a far better format — faster to generate, smaller to transmit, more readable on screen. Only a custom build delivers HTML reports natively.</p></div>
+        <span class="gap-severity sev-significant">Significant</span>
+      </div>
+      <div class="gap-item">
+        <div class="gap-num">5</div>
+        <div class="gap-content"><h4>Google Calendar as the primary scheduling layer</h4><p>All apps have their own scheduling systems. None natively pull from or push to Google Calendar as a source of truth. Zapier integrations exist but are one-directional and lag-prone. A custom build could treat Google Calendar as the native scheduling layer, preserving the existing multi-calendar setup.</p></div>
+        <span class="gap-severity sev-manageable">Manageable</span>
+      </div>
+      <div class="gap-item">
+        <div class="gap-num">6</div>
+        <div class="gap-content"><h4>Auto-surfacing factory process weaknesses from report history</h4><p>SafetyCulture and Lumiform show trend dashboards but only at a surface level. Genuine insight — "this factory consistently fails dimensional checks on Day 2, suggesting a shift-change process problem" — requires AI analysis of accumulated report data. No app does this. It's achievable with a custom AI analytics layer built on the inspection database.</p></div>
+        <span class="gap-severity sev-significant">Significant</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom" class="section">
+    <div class="section-header">
+      <div>
+        <h2>The custom build path</h2>
+        <p>Given the identified gaps, a purpose-built system is worth taking seriously. Modern no-code and AI tools make this more achievable than it was even two years ago — the architecture below could be built in 4–8 weeks.</p>
+      </div>
+      <div class="verdict-box">
+        <div class="vb-label">Build vs buy</div>
+        <p>Build if: client portal is important to SSN's service model, AI narrative is non-negotiable, and the plan is to scale this service. Buy if: you need something running in weeks and can accept PDF-only output short-term.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <div class="callout-label">Architecture overview — three layers</div>
+      <p>A viable custom system has three layers that each solve a specific problem. They can be built incrementally — Layer 1 first, then Layers 2 and 3 as requirements become clearer from real use.</p>
+    </div>
+    <div class="custom-stack">
+      <div class="stack-layer">
+        <div class="stack-layer-header">Layer 1 · Field Capture</div>
+        <div class="stack-layer-body">
+          <strong>SafetyCulture or Lumiform</strong>
+          <p>Use an existing inspection app for field work — mobile, offline, photo capture, checklists. Don't build this part. Structured output (data + photos) feeds Layer 2.</p>
+          <strong>OR: Google Forms + Drive</strong>
+          <p>Lean start: purpose-built Google Forms per product category, photos to Drive, data to Sheets. Not ideal but free as a proof of concept.</p>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-header">Layer 2 · AI &amp; Report Engine</div>
+        <div class="stack-layer-body">
+          <strong>Claude API + Airtable / Supabase</strong>
+          <p>Inspection data flows into a database. Claude API generates: (1) a product-specific checklist before each inspection, (2) a professional narrative report after — referencing photos, measurements, and findings.</p>
+          <strong>Output: HTML + PDF</strong>
+          <p>HTML for the portal; PDF generated from HTML via headless browser (Puppeteer). Both branded, photo-embedded, professional.</p>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-header">Layer 3 · Client Portal</div>
+        <div class="stack-layer-body">
+          <strong>Softr or Stacker (on Airtable)</strong>
+          <p>No-code portal where each client logs in and sees only their inspections: report history, trend charts, photo galleries, downloadable PDFs. Fully branded for SSN Projects.</p>
+          <strong>OR: Custom web app</strong>
+          <p>Built on Next.js + Supabase for full control. Costlier but fully bespoke — suitable if the portal becomes a core client deliverable.</p>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout-warn">
+      <div class="callout-label">Realistic cost range</div>
+      <p><strong>Lean (no-code, self-assembled):</strong> $500–2,000 setup + ~$200/month running. Softr/Airtable + Claude API + field app. Fast to start, limits on report customisation.<br><br>
+      <strong>Mid-tier (developer, 4–6 weeks):</strong> $5,000–12,000 build + ~$300–500/month running. Custom AI reports and client portal on Airtable or Supabase. Most flexible option.<br><br>
+      <strong>Full custom (8–12 weeks):</strong> $15,000–30,000 + ongoing maintenance. Native mobile or excellent PWA, full AI integration, enterprise-grade portal. Likely more than needed at this stage.</p>
+    </div>
+  </div>
+
+  <div id="verdict" class="section">
+    <div class="section-header">
+      <div>
+        <h2>Recommendation</h2>
+        <p>Based on SSN's requirements, the identified gaps, and a pragmatic view of what can be operational quickly versus what needs to be built — here is the recommended path forward.</p>
+      </div>
+      <div class="verdict-box">
+        <div class="vb-label">Overall position</div>
+        <p>Start with an off-the-shelf app to get operational. Run it seriously for 90 days. Use that real-world data to define the custom build spec — rather than speccing a bespoke system before knowing exactly what you need from it.</p>
+      </div>
+    </div>
+    <div class="rec-grid">
+      <div class="rec-card">
+        <div class="rec-card-header"><div class="rec-scenario">Path A · Start now (weeks)</div><h3>SafetyCulture + AI post-processing via Zapier</h3></div>
+        <div class="rec-card-body">
+          <p>Use SafetyCulture for field capture — the most mature platform, best template library, and AI template creation gives you a head start. Accept the PDF output format short-term.</p>
+          <p>Add a Zapier automation: report submitted → data to Claude API → Claude generates a narrative summary → sent alongside or appended to the report. Imperfect, but delivers professional-quality output without a build.</p>
+          <p class="caveat">Test the 150-photo sync on a factory floor with restricted WiFi before committing. This is the most likely failure point.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-card-header"><div class="rec-scenario">Path B · Best off-the-shelf (2–4 weeks)</div><h3>Lumiform for AI checklists · GoAudits for report quality</h3></div>
+        <div class="rec-card-body">
+          <p>Run parallel trials of both. Lumiform wins on AI checklist generation — SSN's hardest problem. GoAudits wins on report appearance and offline reliability. They serve different strengths within the same brief.</p>
+          <p>Trial Lumiform first given the AI edge. If the report output disappoints, pivot to GoAudits and build the AI narrative layer separately via Zapier or a developer.</p>
+          <p class="caveat">Neither solves the client portal gap. SSN would still be emailing PDFs, which limits the premium feel of the service offering.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-card-header"><div class="rec-scenario">Path C · Medium-term (3–6 months)</div><h3>Field app + Claude API + Softr client portal</h3></div>
+        <div class="rec-card-body">
+          <p>Run Path A or B for 90 days. During that time, capture what's needed: which product types are most common, what the ideal report structure looks like, what clients actually ask for.</p>
+          <p>Then build Layer 2 (Claude API for narrative reports) and Layer 3 (Softr portal on Airtable) using a no-code developer. Budget: $3,000–6,000. This gives SSN a genuine competitive differentiator in the QC consultancy space.</p>
+          <p class="caveat">Softr/Airtable handles 80% of the need. The remaining 20% — very custom report layouts, native mobile — would require a full build.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-card-header"><div class="rec-scenario">Path D · Full vision (6–12 months)</div><h3>Custom-built QC platform with AI at the core</h3></div>
+        <div class="rec-card-body">
+          <p>If the client portal becomes a key deliverable SSN charges for — or if the consultancy grows to where the tool is a differentiator worth protecting — commission a proper build: PWA for field inspectors, Claude API for checklist + narrative generation, Supabase database, custom Next.js client portal.</p>
+          <p>The cost ($10,000–20,000) is reasonable for what it produces. But don't build it until the workflow has been proven with an off-the-shelf app first.</p>
+          <p class="caveat">The risk of building too early is building the wrong thing. 90 days of real use will tell you more than any spec document.</p>
+        </div>
+      </div>
+    </div>
+    <div class="callout">
+      <div class="callout-label">Immediate next step</div>
+      <p><strong>Trial Lumiform (free plan, up to 5 users) for 30 days.</strong> Use it for 3–5 real inspections across different product types. Pay attention to: (1) how much time the AI saves on checklist creation, (2) whether the PDF output looks professional enough to send to an Australian client today, (3) how sync behaves with 50–100 photos on factory WiFi. That data answers the questions no amount of research can.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">SSN PROJECTS</span>
+  <p>QC Inspection Platform Research · May 2026 · Confidential</p>
+  <p>Sources: Capterra, G2, vendor docs, verified user reviews 2025–2026</p>
+</footer>
+
+<script>
+  function showSection(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
